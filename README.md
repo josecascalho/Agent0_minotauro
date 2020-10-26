@@ -8,28 +8,30 @@ A interação entre o agente e o ambiente é comandada através de um cliente e 
 
 ## Como instalar
 Para correr o servidor e o cliente, o utilizador deve ter instalada a versão 3 do Python. Além do Python 3, o cliente necessita da biblioteca Pillow
+  
 ### Instalar o Python 3:
-  **Nota: para facilitar a utilização no Windows, o Python deve ser adicionado ao PATH**  
-  Windows: https://docs.python.org/3/using/windows.html  
-  Mac: https://docs.python.org/3/using/mac.html  
-  Linux: https://docs.python.org/3/using/unix.html#on-linux  
+ 
+**Nota: para facilitar a utilização no Windows, o Python deve ser adicionado ao PATH**  
+- Windows: https://docs.python.org/3/using/windows.html  
+- Mac: https://docs.python.org/3/using/mac.html  
+- Linux: https://docs.python.org/3/using/unix.html#on-linux  
   
 ### Instalar a biblioteca Pillow:
   Após instalar o Python, executar na linha de comandos:  
-    ```python3 -m pip install --upgrade pip  
-    python3 -m pip install --upgrade Pillow```  
+    ```python3 -m pip install --upgrade pip```  
+    ```python3 -m pip install --upgrade Pillow```  
 
 ## Como correr:
-Para correr o servidor:  
-  Na linha de comandos, **a partir do diretório principal do projeto**, executar:  
+### Para correr o servidor:  
+Na linha de comandos, **a partir do diretório principal do projeto**, executar:  
     ```python3 server/server.py```  
   
-Para correr o cliente:  
-  Na linha de comandos, **a partir do diretório principal do projeto**, executar:  
+### Para correr o cliente:  
+Na linha de comandos, **a partir do diretório principal do projeto**, executar:  
     ```python3 client/client.py```  
 
-Para correr um agente (que faz uso do cliente):  
-  Na linha de comandos, **a partir do diretório principal do projeto**, executar, por exemplo:  
+### Para correr um agente (que faz uso do cliente):  
+Na linha de comandos, **a partir do diretório principal do projeto**, executar, por exemplo:  
     ```python3 client/example.py```  
 
 ## Como comandar o agente:  

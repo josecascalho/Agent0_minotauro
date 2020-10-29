@@ -42,3 +42,6 @@ A configuração do ambiente e do agente é feita no ficheiro **config.json**, a
   
 ## Erros conhecidos:  
 A interface gráfica do servidor bloqueia enquanto espera pela conexão do cliente. No Windows, por exemplo, é necessário fechar o programa à força caso se queira terminá-lo antes de conectar o cliente.
+
+Gil Silva
+José Cascalho

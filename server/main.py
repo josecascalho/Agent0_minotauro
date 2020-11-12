@@ -1,5 +1,3 @@
-import threading
-
 import game_board as gb
 import socket
 import sys
@@ -15,6 +13,27 @@ class Server(BaseException):
 
         self.config = config
 
+        if "use_maps?" in config and config["use_maps?"]:
+            config["board_dimensions"] = (len(config["object_map"][0]), len(config["object_map"]))
+            config["bomb_coordinates"], config["goal_coordinates"], config["obstacle_coordinates"] = [], [], []
+            config["weights"] = {}
+            for row_index, row in enumerate(config["object_map"]):
+                for char_index, char in enumerate(row):
+                    if char == "O":
+                        config["obstacle_coordinates"].append((char_index, row_index))
+                    elif char == "I":
+                        config["obstacle_coordinates"].append((char_index, row_index, "invisible"))
+                    elif char == "B":
+                        config["bomb_coordinates"].append((char_index, row_index))
+                    elif char == "G":
+                        config["goal_coordinates"].append((char_index, row_index))
+                    elif char == "A":
+                        config["start_position"] = (char_index, row_index)
+
+                for char_index, char in enumerate(config["weight_map"][row_index]):
+                    if char in "1234":
+                        config["weights"][str(char_index)+","+str(row_index)] = config["weight_dictionary"][char]
+
         # Size of the world ...
         print("Starting the Game Board")
         columns, rows = config["board_dimensions"]
@@ -22,7 +41,6 @@ class Server(BaseException):
         self.root = tk.Tk()
 
         # Create gameboard
-        # TODO: TEMAS!!!!
         self.board = gb.GameBoard(self.root, self.config, columns, rows)
         self.board.pack(side="top", fill="both", expand="true", padx=4, pady=4)
 
@@ -33,28 +51,18 @@ class Server(BaseException):
         self.initialize_goals()
         self.initialize_bombs()
 
-        # self.root.update()
-        # SERVER SERVER:
-        # Starting server ...
-        # print("Starting the server!")
-        # server = s.Server()
-        # PLAYER PLAYER:
-        # Initialize player ...
         self.player = gb.Player('player', *self.config["start_position"], 'south', 'front', self.config)
         self.player.set_home((0, 0))
         self.player.close_eyes()
+
         # Add player ...
         self.board.add(self.player, *self.config["start_position"])
         self.root.update()
 
-
-
     def initialize_obstacles(self):
-        i = 1
-        for obst in self.config["obstacle_coordinates"]:
-            ob = gb.Obstacle('ob' + str(i), obst[0], obst[1], self.config)
+        for i, obst in enumerate(self.config["obstacle_coordinates"]):
+            ob = gb.Obstacle('ob' + str(i), obst[0], obst[1], self.config, obst[-1] != "invisible")
             self.board.add(ob, obst[0], obst[1])
-            i += 1
 
     def initialize_goals(self):
         i = 1
@@ -85,7 +93,10 @@ class Server(BaseException):
 
     def initialize_weights(self):
         weights = {tuple([int(coord) for coord in k.split(",")]): v for k, v in self.config["weights"].items()}
-        names = {1.0: "patch_clear", 1.1: "patch_lighter", 1.2: "patch_middle", 1.3:"patch_heavy"}
+        names = {1.0: "patch_clear",
+                 1.1: "patch_lighter",
+                 1.2: "patch_middle",
+                 1.3: "patch_heavy"}
         patch = [[0]*self.board.columns]*self.board.rows
 
         weight = 1.0
@@ -114,7 +125,7 @@ class Server(BaseException):
                                               weight, self.config)
                 self.board.add(patch[row][column], column, row)
 
-    def execute(self, cmd_type, value):
+    def execute(self, cmd_type, value, conn):
         res = ""
         if cmd_type == 'command':
             # -----------------------
@@ -186,7 +197,7 @@ class Server(BaseException):
                 res = self.player.get_direction()
             elif value == 'view':
                 front = self.board.get_place_ahead(self.player)
-                res = self.board.view_object(front)
+                res = self.board.view_object(*front)
                 res.reverse()
             elif value == "weights":
                 # recebia self.player
@@ -209,39 +220,34 @@ class Server(BaseException):
                 res = self.board.get_max_coord()
                 # print('MaxCoordinates:', res)
             elif value == 'north':
-                # View north
                 front = self.board.get_place_direction(self.player, 'north')
-                res = self.board.view_object(front)
+                res = self.board.view_object(*front)
             elif value == 'south':
-                # View north
                 front = self.board.get_place_direction(self.player, 'south')
-                res = self.board.view_object(front)
+                res = self.board.view_object(*front)
             elif value == 'east':
-                # View north
                 front = self.board.get_place_direction(self.player, 'east')
-                res = self.board.view_object(front)
+                res = self.board.view_object(*front)
             elif value == 'west':
-                # View north
                 front = self.board.get_place_direction(self.player, 'west')
-                res = self.board.view_object(front)
-
-            # EXAMPLE_AGENT_SEARCH
-            elif len(value.split(",")) == 2 and all(x.isnumeric() for x in value.split(",")):
-                print(value)
-                res = self.board.view_object([int(x) for x in value.split(",")])
-
+                res = self.board.view_object(*front)
             else:
                 pass
 
         # EXAMPLE_AGENT_SEARCH
         elif cmd_type == "mark":
-            self.board.mark(*[int(i) for i in value.split("_")[0].split(",")], value.split("_")[1])
-            res = True
+            try:
+                self.board.mark(*[int(i) for i in value.split("_")[0].split(",")], value.split("_")[1])
+                res = True
+            except:
+                res = ""
 
         elif cmd_type == "unmark":
-            self.board.unmark(*[int(i) for i in value.split(",")])
-            res = True
-
+            try:
+                self.board.unmark(*[int(i) for i in value.split(",")])
+                res = True
+            except:
+                res = ""
         return res
 
     def connect(self):
@@ -266,20 +272,22 @@ class Server(BaseException):
                     if len(data) >= 2:
                         cmd_type, value = data
 
-                    res = self.execute(cmd_type, value)
+                    res = self.execute(cmd_type, value, conn)
 
                     if res != '':
                         return_data = str.encode(str(res))
                     else:
                         return_data = str.encode(
-                            "what? commands= <forward,left,right,set_steps,reset_steps, open_eyes, close_eyes> "
-                            + "info=<direction,view,weights,map,goal,postion,obstacles,maxcoord>")
+                            "what?\ncommand = <forward,left,right,set_steps,reset_steps, open_eyes, close_eyes> "
+                            + "\ninfo = <direction,view,weights,map,goal,postion,obstacles,maxcoord> "
+                            + "\nmark = <{x},{y}_{color} (no spaces!)> \nunmark = <{x},{y}> (no spaces!)")
                     conn.sendall(return_data)
                     self.root.update()
                 except socket.timeout:
                     # test
                     # print("Timeout!")
                     self.root.update()
+
 
 def main():
     with open("config.json") as config_file:
@@ -291,10 +299,6 @@ def main():
         host = config["host"]
         port = config["port"]
 
-    # Paths to input files
-    #gameboard_file = './input_files/gameboard_file.txt'
-    #images_directory = './images-mercury/'
-    #image_type = "photo"
     # Initialize the server
     server = Server(host, port, config)
     # Wait for connection

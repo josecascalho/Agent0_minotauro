@@ -55,7 +55,7 @@ class GameObject:
             self.image = bitmap
         else:
             im = Image.open(self.image_dir + self.image_file + "_" + self.direction + ".png")
-            print(self.image_dir + self.image_file + "_" + self.direction + ".png", self.width, self.height)
+            # print(self.image_dir + self.image_file + "_" + self.direction + ".png", self.width, self.height)
             im.thumbnail((self.width, self.height))
             photo = ImageTk.PhotoImage(im)
             self.image = photo
@@ -133,6 +133,7 @@ class GameObject:
 # CLASS PLAYER:
 # ------------------------------------------------------------
 class Player(GameObject):
+    name = "player"
     def __init__(self, name, x, y, direction, view_type, config, width=64, height=64):
         super().__init__(name, "agent1", config, x, y, direction, width=width, height=height)
         self.view_type = view_type
@@ -142,14 +143,22 @@ class Player(GameObject):
 # CLASS OBSTACLE:
 # ------------------------------------------------------------
 class Obstacle(GameObject):
-    def __init__(self, name, x, y, config):
-        super().__init__(name, "obstacle1", config, x, y, "south")
+    name = "obstacle"
+
+    def __init__(self, name, x, y, config, visible):
+        self.visible = visible
+        super().__init__(name, "obstacle"+str(int(visible)), config, x, y, "south")
+
+    def is_visible(self):
+        return self.visible
 
 
 # ------------------------------------------------------------
 # CLASS Bomb:
 # ------------------------------------------------------------
 class Bomb(GameObject):
+    name = "bomb"
+
     def __init__(self, name, x, y, config):
         super().__init__(name, "bomb1", config, x, y, "south")
 
@@ -158,6 +167,8 @@ class Bomb(GameObject):
 # CLASS BombSound:
 # ------------------------------------------------------------
 class BombSound(GameObject):
+    name = "bomb_sound"
+
     def __init__(self, name, x, y, config):
         super().__init__(name, "bomb_sound1", config, x, y, "south")
 
@@ -166,6 +177,8 @@ class BombSound(GameObject):
 # CLASS PATCH:
 # ------------------------------------------------------------
 class Patch(GameObject):
+    name = "unknown"
+
     def __init__(self, name, image_file, x, y, w, config):
         super().__init__(name, image_file, config, x, y, "south")
         self.weight = w
@@ -175,6 +188,8 @@ class Patch(GameObject):
 # CLASS GOAL:
 # ------------------------------------------------------------
 class Goal(GameObject):
+    name = "goal"
+
     def __init__(self, name, x, y, config):
         super().__init__(name, "goal", config, x, y, "south")
 
@@ -218,7 +233,7 @@ class GameBoard(tk.Frame):
 
     def quit(self):
         """ handle button click event and output text from entry area"""
-        print('quiting!')  # do here whatever you want
+        print('quitting!')  # do here whatever you want
         self.parent.destroy()
         sys.exit()
 
@@ -321,9 +336,7 @@ class GameBoard(tk.Frame):
                                                 anchor="c")
         game_object.set_canvas_image(canvas_image)
         self.place(game_object, x, y)
-        #self.objects.append(game_object)
-        # OBJECT_MATRIX
-        print(x,y)
+        # print(x, y)
         self.object_matrix[x][y].append(game_object)
 
     # ------------------------------------------------
@@ -331,10 +344,7 @@ class GameBoard(tk.Frame):
     # ------------------------------------------------
 
     def remove(self, game_object):
-        # del self.pieces[object.name]
         self.canvas.delete(game_object.get_name())
-        #self.objects.remove(game_object)
-        # OBJECT_MATRIX
         self.object_matrix[game_object.get_x()][game_object.get_y()].remove(game_object)
         del game_object
         # self.moving_refresh()
@@ -359,7 +369,7 @@ class GameBoard(tk.Frame):
 
     def change_position(self, game_object, x, y):
         if game_object.get_steps_view():
-            print("Player was at: ", game_object.get_x(), game_object.get_y())
+            # print("Player was at: ", game_object.get_x(), game_object.get_y())
             self.print_step(game_object)
         x = self.change_x(x)
         y = self.change_y(y)
@@ -372,7 +382,8 @@ class GameBoard(tk.Frame):
 
     def turn_north(self, game_object):
         (nx, ny) = self.get_place_ahead(game_object)
-        self.remove_viewscreen(game_object, nx, ny)
+        if game_object.is_eyes_open():
+            self.remove_viewscreen(game_object, nx, ny)
         game_object.set_direction("north")
         self.canvas.itemconfig(game_object.get_canvas_image(), image=game_object.get_image())
         self.place(game_object, game_object.get_x(), game_object.get_y())
@@ -380,7 +391,8 @@ class GameBoard(tk.Frame):
 
     def turn_south(self, game_object):
         (nx, ny) = self.get_place_ahead(game_object)
-        self.remove_viewscreen(game_object, nx, ny)
+        if game_object.is_eyes_open():
+            self.remove_viewscreen(game_object, nx, ny)
         game_object.set_direction("south")
         self.canvas.itemconfig(game_object.get_canvas_image(), image=game_object.get_image())
         self.place(game_object, game_object.get_x(), game_object.get_y())
@@ -388,7 +400,8 @@ class GameBoard(tk.Frame):
 
     def turn_east(self, game_object):
         (nx, ny) = self.get_place_ahead(game_object)
-        self.remove_viewscreen(game_object, nx, ny)
+        if game_object.is_eyes_open():
+            self.remove_viewscreen(game_object, nx, ny)
         game_object.set_direction("east")
         self.canvas.itemconfig(game_object.get_canvas_image(), image=game_object.get_image())
         self.place(game_object, game_object.get_x(), game_object.get_y())
@@ -396,7 +409,8 @@ class GameBoard(tk.Frame):
 
     def turn_west(self, game_object):
         (nx, ny) = self.get_place_ahead(game_object)
-        self.remove_viewscreen(game_object, nx, ny)
+        if game_object.is_eyes_open():
+            self.remove_viewscreen(game_object, nx, ny)
         game_object.set_direction("west")
         self.canvas.itemconfig(game_object.get_canvas_image(), image=game_object.get_image())
         self.place(game_object, game_object.get_x(), game_object.get_y())
@@ -408,7 +422,8 @@ class GameBoard(tk.Frame):
 
     def turn_left(self, game_object):
         (nx, ny) = self.get_place_ahead(game_object)
-        self.remove_viewscreen(game_object, nx, ny)
+        if game_object.is_eyes_open():
+            self.remove_viewscreen(game_object, nx, ny)
         if game_object.get_direction() == "north":
             res = self.turn_west(game_object)
         elif game_object.get_direction() == "south":
@@ -421,7 +436,8 @@ class GameBoard(tk.Frame):
 
     def turn_right(self, game_object):
         (nx, ny) = self.get_place_ahead(game_object)
-        self.remove_viewscreen(game_object, nx, ny)
+        if game_object.is_eyes_open():
+            self.remove_viewscreen(game_object, nx, ny)
         if game_object.get_direction() == "north":
             res = self.turn_east(game_object)
         elif game_object.get_direction() == "south":
@@ -493,12 +509,6 @@ class GameBoard(tk.Frame):
 
     def is_target_obstacle(self, coordinates):
         """Test if in the coordinates there is an obstacle"""
-        #for obj in self.objects:
-        #    if isinstance(obj, Obstacle):
-        #        if obj.get_x() == coordinates[0] and obj.get_y() == coordinates[1]:
-        #            return True
-        #return False
-        # OBJECT_MATRIX
         return any(isinstance(obj, Obstacle) for obj in self.object_matrix[coordinates[0]][coordinates[1]])
 
     def move(self, game_object, movement):
@@ -574,11 +584,6 @@ class GameBoard(tk.Frame):
     # GET_GOAL_POSITION (return the position of the goal)
     # ------------------------------------------------
     def get_goal_position(self):
-        #for ag in self.objects:
-        #    if isinstance(ag, Goal):
-        #        return ag.get_x(), ag.get_y()
-        #return None
-        # OBJECT_MATRIX
         for column in self.object_matrix:
             for square in column:
                 for game_object in square:
@@ -590,73 +595,25 @@ class GameBoard(tk.Frame):
     # VIEW OBJECTS (return objects ahead)
     # ------------------------------------------------
 
-    def view_object(self, coordinates):
+    def view_object(self, x, y):
         """Return the type of object in the position given by 'coordinates'"""
-        # res = []
-        # # front = self.get_place_ahead(object)
-        # for ag in self.objects:
-        #     if ag.get_x() == coordinates[0] and ag.get_y() == coordinates[1]:
-        #         print('There is something in position:', coordinates)
-        #
-        #         if isinstance(ag, Player):
-        #             res.append('player')
-        #
-        #         elif isinstance(ag, Bomb):
-        #             res.append('bomb')
-        #
-        #         elif isinstance(ag, BombSound):
-        #             res.append('bomb_sound')
-        #
-        #         elif isinstance(ag, Obstacle):
-        #             res.append('obstacle')
-        #
-        #         elif isinstance(ag, Goal):
-        #             res.append('goal')
-
-        #        else:
-        #            res.append('unknown')
-        #    else:
-        #        pass
-        #return res
-        # OBJECT_MATRIX
-        return [type(x).__name__.lower() for x in self.object_matrix[coordinates[0]][coordinates[1]]]
-
+        return [type(x).name for x in self.object_matrix[x][y]]
 
     def view_weights(self, game_object, view):
-        # if view == "front":
-        #     front = self.get_place_ahead(game_object)
-        #     for ag in self.objects:
-        #         if isinstance(ag, Patch):
-        #             if ag.get_x() == front[0] and ag.get_y() == front[1]:
-        #                 print("Found weights! x=", front[0], " y=", front[1], " weight=", ag.get_weight())
-        #                 return ag.get_weight()
-        #     return 0.0
         if view == "front":
             x,y = self.get_place_ahead(game_object)
             return self.object_matrix[x][y][0].get_weight()
         else:
             return 0.0
-        # OBJECT_MATRIX
-
 
     def view_global_weights(self):
-        #weights = [[0] * self.columns for _ in range(self.rows)]
-        #for ag in self.objects:
-        #    if isinstance(ag, Patch):
-        #        weights[ag.get_x()][ag.get_y()] = ag.get_weight()
-        #return weights
-        # OBJECT_MATRIX
-        # assumindo que o primeiro elemento é sempre do tipo Patch...
+        # assuming the first element's type is always Patch...
         return [[square[0].get_weight() for square in column] for column in self.object_matrix]
 
     def view_obstacles(self):
-        #obstacles = [[0] * self.columns for _ in range(self.rows)]
-        #for ag in self.objects:
-        #    if isinstance(ag, Obstacle):
-        #        obstacles[ag.get_x()][ag.get_y()] = 1
-        #return obstacles
-        # OBJECT_MATRIX
-        return [[any(isinstance(obj, Obstacle) for obj in square) for square in column] for column in self.object_matrix]
+        return [[any(isinstance(obj, Obstacle) and obj.is_visible() for obj in square)
+                for square in column]
+                for column in self.object_matrix]
 
     def refresh(self, event):
         """Redraw the board, possibly in response to window being resized"""
@@ -670,27 +627,27 @@ class GameBoard(tk.Frame):
                 y1 = (row * self.size)
                 x2 = x1 + self.size
                 y2 = y1 + self.size
-                # TODO: TEMAS!!!
-                self.rectangles[col][row] = self.canvas.create_rectangle(x1, y1, x2, y2, outline="black",
-                                                                         fill=self.bg_color,
+                previous_color = self.canvas.itemcget(self.rectangles[col][row], "fill")
+                self.rectangles[col][row] = self.canvas.create_rectangle(x1,
+                                                                         y1,
+                                                                         x2,
+                                                                         y2,
+                                                                         outline="black" if self.bg_color!="black" else "#7b145c",
+                                                                         fill= previous_color if previous_color != "" else self.bg_color,
                                                                          tags="square",
-                                                                         width=(1 if self.bg_color != "black" else 0))
-        #for game_object in self.objects:
-        #    print(game_object.get_name())
-        #    self.place(game_object, game_object.get_x(), game_object.get_y())
-        # OBJECT_MATRIX
+                                                                         width=1) # (1 if self.bg_color != "black" else 0))
+
         for column in self.object_matrix:
             for square in column:
                 for game_object in square:
                     self.place(game_object, game_object.get_x(), game_object.get_y())
-        print("TEST 2", self.rectangles)
         self.canvas.tag_raise("piece")
         self.canvas.tag_lower("square")
-        print("TEST 3", self.rectangles)
 
     # EXAMPLE_AGENT_SEARCH
     def mark(self, x, y, color):
         self.canvas.itemconfig(self.rectangles[x][y], fill=color)
+
 
     def unmark(self, x, y):
         self.canvas.itemconfig(self.rectangles[x][y], fill=self.bg_color)

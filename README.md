@@ -24,7 +24,7 @@ Para correr o servidor e o cliente, o utilizador deve ter instalada a versão 3 
 ## Como correr:
 ### Para correr o servidor:  
 Na linha de comandos, **a partir do diretório principal do projeto**, executar:  
-    ```python3 server/server.py```  
+    ```python3 server/main.py```  
   
 ### Para correr o cliente:  
 Na linha de comandos, **a partir do diretório principal do projeto**, executar:  
@@ -43,5 +43,6 @@ A configuração do ambiente e do agente é feita no ficheiro **config.json**, a
 ## Erros conhecidos:  
 A interface gráfica do servidor bloqueia enquanto espera pela conexão do cliente. No Windows, por exemplo, é necessário fechar o programa à força caso se queira terminá-lo antes de conectar o cliente.
 
-Gil Silva
-José Cascalho
+## Contribuidores:
+ - Gil Silva
+ - José Cascalho

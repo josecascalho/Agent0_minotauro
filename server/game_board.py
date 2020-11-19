@@ -613,7 +613,7 @@ class GameBoard(tk.Frame):
         return [[square[0].get_weight() for square in column] for column in self.object_matrix]
 
     def view_obstacles(self):
-        return [[any(isinstance(obj, Obstacle) and obj.is_visible() for obj in square)
+        return [[int(any(isinstance(obj, Obstacle) and obj.is_visible() for obj in square))
                 for square in column]
                 for column in self.object_matrix]
 

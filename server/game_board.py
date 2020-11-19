@@ -30,7 +30,6 @@ class GameObject:
         self.canvas_image = None  # só para declarar em __init__
         self.image_dir = config["image_directory"]
         self.set_image()
-
         self.eyes_open = eyes_open
         self.view = {}
         self.view_type = ''
@@ -107,6 +106,9 @@ class GameObject:
 
     def get_image(self):
         return self.image
+
+    def get_image_file(self):
+        return self.image_file
 
     def get_canvas_image(self):
         return self.canvas_image
@@ -330,7 +332,7 @@ class GameBoard(tk.Frame):
 
     def add(self, game_object, x=0, y=0):
         """Add object to the playing board"""
-        # print("Adding object",object,"in position x y", x, y)
+        #print("Adding object",game_object," with image ",game_object.get_image_file()," in position (x,y)= (", x,",", y,")")
         canvas_image = self.canvas.create_image(x, y, image=game_object.get_image(),
                                                 tags=(game_object.get_name(), "piece"),
                                                 anchor="c")

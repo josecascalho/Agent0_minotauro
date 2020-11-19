@@ -92,38 +92,46 @@ class Server(BaseException):
             i += 1
 
     def initialize_weights(self):
-        weights = {tuple([int(coord) for coord in k.split(",")]): v for k, v in self.config["weights"].items()}
-        names = {1.0: "patch_clear",
-                 1.1: "patch_lighter",
-                 1.2: "patch_middle",
-                 1.3: "patch_heavy"}
+        weights = {tuple([int(coord) for coord in k.split(",")]): float(v) for k, v in self.config["weights"].items()}
+        images =["patch_clear","patch_lighter","patch_middle","patch_heavy"]
         patch = [[0]*self.board.columns]*self.board.rows
+        # Get the max and min values in weights
+        max_value = weights.get(max(weights,key=weights.get))
+        min_value = weights.get(min(weights,key=weights.get))
+        #Test
+        print("Max value:",max_value)
+        print("Min value:",min_value)
 
-        weight = 1.0
-        name = ''
-        for row in range(0, self.board.rows):
-            for column in range(0, self.board.columns):
-                print("column:", column, "row:", row)
+        # Normalize as step fo   r four values
+        step = (max_value - min_value) / 4.0
+        keys = []
+        # List of keys and dictionary of names
+        for i in range(4):
+             value = min_value + i* step
+             keys.append( value )
+        image=""
+        for column in range(0, self.board.columns):
+            for row in range(0, self.board.rows):
                 if (column, row) in weights:
-                    weight = weights[(column, row)]
-                    name = names[weight]
+                    weight = weights[(column,row)]
                 else:
-                    res = random.uniform(0, 1.0)
-                    if res <= 0.3:
-                        name = "patch_clear"
-                        weight = 1.0
-                    elif res <= 0.5:
-                        weight = 1.1  # 2.0
-                        name = "patch_lighter"
-                    elif res <= 0.7:
-                        weight = 1.2  # 4.0
-                        name = "patch_middle"
-                    elif res <= 1.0:
-                        weight = 1.3  # 8.0
-                        name = "patch_heavy"
-                patch[row][column] = gb.Patch('patch' + str(column) + "-" + str(row), name, column, row,
-                                              weight, self.config)
+                    weight = random.uniform(min_value, max_value)
+                if weight >= keys[3]:
+                    image = images[3]
+                elif weight < keys[3] and weight >= keys[2]:
+                    image = images[2]
+                elif weight < keys[2] and weight >= keys[1]:
+                    image = images[1]
+                elif weight < keys[1]: #weight >= keys[0]:
+                    image = images[0]
+
+                patch[row][column] = gb.Patch('patch' + str(column) + "-" + str(row), image, column, row,
+                                                  weight, self.config)
                 self.board.add(patch[row][column], column, row)
+                #Teste
+                #print("column:", column, "row:", row, "name:", n)
+
+
 
     def execute(self, cmd_type, value, conn):
         res = ""
